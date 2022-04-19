@@ -39,7 +39,9 @@ public class GUI extends JFrame implements CaretListener{
     private String dir="";
     
     /**
-     * Describes if changes were made to a file.
+     * Flag used in carretUpdate, prevents from changing styles without user intention.<br>
+     * Ex. Ctrl+A text selection
+     * @see GUI#caretUpdate(javax.swing.event.CaretEvent)
      */
     private boolean zmiany=false;
     
@@ -53,8 +55,18 @@ public class GUI extends JFrame implements CaretListener{
         panel.setStyledDocument(dsd);
         zaladujCzcionki();
         pPogrubienie.addActionListener(new StyledEditorKit.BoldAction());
+        MouseAdapter a=new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                zapisano=false;
+            }
+        };
+        pPogrubienie.addMouseListener(a);
         pPochylenie.addActionListener(new StyledEditorKit.ItalicAction());
+        pPochylenie.addMouseListener(a);
         pPodkreslenie.addActionListener(new StyledEditorKit.UnderlineAction());
+        pPodkreslenie.addMouseListener(a);
         pKolor.addMouseListener(new MouseAdapter(){
             @Override
             public void mousePressed(MouseEvent e)
@@ -136,7 +148,7 @@ public class GUI extends JFrame implements CaretListener{
             StyleConstants.setForeground(aset, c);
             panel.setCharacterAttributes(aset,false);
             pKolor.setBackground(c);
-            zmiany=true;
+            zapisano=false;
         }
     }
     
@@ -153,7 +165,7 @@ public class GUI extends JFrame implements CaretListener{
             StyleConstants.setBackground(aset, c);
             panel.setCharacterAttributes(aset,false);
             pKolorTla.setBackground(c);
-            zmiany=true;
+            zapisano=false;
         }
     }
     
@@ -167,7 +179,7 @@ public class GUI extends JFrame implements CaretListener{
         SimpleAttributeSet aset=new SimpleAttributeSet();
         StyleConstants.setFontFamily(aset, s);
         panel.setCharacterAttributes(aset,false);
-        zmiany=true;
+        zapisano=false;
     }
     /**
      * Change font size of a selected text.
@@ -180,7 +192,7 @@ public class GUI extends JFrame implements CaretListener{
         SimpleAttributeSet aset=new SimpleAttributeSet();
         StyleConstants.setFontSize(aset, rozmiar);
         panel.setCharacterAttributes(aset,false);
-        zmiany=true;
+        zapisano=false;
     }
    
     @SuppressWarnings("unchecked")
@@ -558,7 +570,7 @@ public class GUI extends JFrame implements CaretListener{
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 730, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -585,7 +597,8 @@ public class GUI extends JFrame implements CaretListener{
 
     private void mdOtworzActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mdOtworzActionPerformed
         // Checks if there isn't unsaved changes
-        if(!zmiany||czyNapewno())
+        System.out.println(zapisano);
+        if(czyNapewno())
         {
         JFileChooser fc=new JFileChooser();
         fc.setDialogTitle("Otwórz dokument");
@@ -606,6 +619,7 @@ public class GUI extends JFrame implements CaretListener{
                 JOptionPane.showMessageDialog(panel, "Nie udało się wczytać pliku.");
             }
         }
+        zapisano=true;
         }
     }//GEN-LAST:event_mdOtworzActionPerformed
 
@@ -616,16 +630,16 @@ public class GUI extends JFrame implements CaretListener{
      */
     private boolean czyNapewno()
     {
-        // Don't ask if there is no text in editor at all
-        if(dsd.getEndPosition().getOffset()==1)
+        // Don't ask if there is no text in editor at all and ask only when file isn't saved
+        if(dsd.getEndPosition().getOffset()==1||zapisano)
             return true;
-        // Ask only when file isn't saved
-        return !zapisano&&JOptionPane.showConfirmDialog(panel,"Czy na pewno chcesz porzucić zmiany?","Uwaga!",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION;
+        return JOptionPane.showConfirmDialog(panel,"Czy na pewno chcesz porzucić zmiany?","Uwaga!",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION;
     }
     
     private void mdNowyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mdNowyActionPerformed
         // Clears editor and resets changes
-        if(!zmiany||czyNapewno())
+        System.out.println(zapisano);
+        if(czyNapewno())
         {
             dir="";
             pKolor.setBackground(Color.BLACK);
